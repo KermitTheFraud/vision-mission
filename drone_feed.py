@@ -6,7 +6,6 @@ Displays the live camera feed in a fixed-size, borderless PIP snapped to the bot
 
 import time
 import cv2
-import numpy as np
 from ctypes import windll
 
 # Configuration
@@ -16,24 +15,27 @@ PIP_W, PIP_H = 320, 240  # picture-in-picture window size (width, height)
 MARGIN = 10              # pixels from screen edges
 
 # Win32 window style constants
-GWL_STYLE      = -16
-WS_POPUP       = 0x80000000
-WS_CAPTION     = 0x00C00000
-WS_THICKFRAME  = 0x00040000
-WS_MINIMIZEBOX = 0x00020000
-WS_MAXIMIZEBOX = 0x00010000
-WS_SYSMENU     = 0x00080000
+GWL_STYLE      = -16           # Index for getting/setting the window's style with GetWindowLong
+WS_POPUP       = 0x80000000    # Style for a popup window (no border or title bar)
+WS_CAPTION     = 0x00C00000    # Style that gives the window a title bar (includes border)
+WS_THICKFRAME  = 0x00040000    # Enables resizing by dragging window borders
+WS_MINIMIZEBOX = 0x00020000    # Adds a minimize button to the title bar
+WS_MAXIMIZEBOX = 0x00010000    # Adds a maximize button to the title bar
+WS_SYSMENU     = 0x00080000    # Enables the system menu (with options like Close, Move, etc.)
+
+# Combines multiple window styles to create a standard, resizable window with system controls
 OVERLAPPED     = (WS_CAPTION | WS_THICKFRAME |
                   WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU)
-SWP_NOSIZE     = 0x0001
-SWP_NOACTIVATE = 0x0010
-SWP_SHOWWINDOW = 0x0040
-HWND_TOPMOST   = -1
 
-'''Open the UDP video stream from the Tello drone.'''
+SWP_NOSIZE     = 0x0001        # When repositioning a window, don't change its size
+SWP_NOACTIVATE = 0x0010        # Don’t activate the window (i.e., don’t give it keyboard focus)
+SWP_SHOWWINDOW = 0x0040        # Makes sure the window is shown (if hidden)
+
+HWND_TOPMOST   = -1            # Special handle that places the window above all non-topmost windows (keeps it always on top)
+
 def open_capture(port):
     """
-    Opens the cv2.VideoCapture for the given UDP port.
+    Open the UDP video stream from the Tello drone via OpenCV.
     """
     cap = cv2.VideoCapture(f'udp://0.0.0.0:{port}')  # connect to Tello feed
     if not cap.isOpened():
@@ -41,27 +43,23 @@ def open_capture(port):
     print(f"Receiving Tello video stream on port {port}")  # log success
     return cap
 
-'''Prepare the OpenCV window for the PIP display.'''
 def setup_window(name):
     """
     Creates and sizes a resizable OpenCV window for the feed.
     """
-    cv2.namedWindow(name, cv2.WINDOW_NORMAL)            # make window resizable
-    cv2.resizeWindow(name, PIP_W, PIP_H)                # set window to PIP size
-    blank = np.zeros((PIP_H, PIP_W, 3), dtype=np.uint8) # blank frame buffer
-    cv2.imshow(name, blank)                             # force window creation
-    cv2.waitKey(1)                                      # pump events once
-    time.sleep(0.05)                                    # small delay for init
+    cv2.namedWindow(name, cv2.WINDOW_NORMAL)  # make window resizable
+    cv2.resizeWindow(name, PIP_W, PIP_H)      # set window to PIP size
+    cv2.waitKey(1)                            # pump events once
+    time.sleep(0.05)                          # small delay for init
 
-'''Strip borders and snap the window to the bottom-right corner.'''
 def position_window(name):
     """
-    Uses Win32 APIs to make the window borderless and always-on-top.
+    Uses Win32 APIs to make the window borderless, always-on-top and snap the window to the bottom-right corner.
     """
     sw = windll.user32.GetSystemMetrics(0)  # screen width
     sh = windll.user32.GetSystemMetrics(1)  # screen height
-    x = sw - PIP_W - MARGIN                  # compute right-edge x
-    y = sh - PIP_H - MARGIN                  # compute bottom-edge y
+    x = sw - PIP_W - MARGIN                 # compute right-edge x
+    y = sh - PIP_H - MARGIN                 # compute bottom-edge y
 
     hwnd = windll.user32.FindWindowW(None, name)
     if hwnd:
@@ -74,12 +72,11 @@ def position_window(name):
         )
         cv2.moveWindow(name, x, y)  # adjust OpenCV’s idea of window position
     else:
-        print(f" Could not find window '{name}' to style/position")  # warn
+        print(f"Could not find window '{name}' to style/position")  # warn
 
-'''Main loop: continuously read frames and display them.'''
 def main_loop(cap, window_name):
     """
-    Grabs frames from the VideoCapture and shows them until the user quits.
+    Grabs frames from the VideoCapture and shows them.
     """
     try:
         while True:
@@ -88,9 +85,9 @@ def main_loop(cap, window_name):
                 time.sleep(DELAY)    # no frame? back off briefly
                 continue
 
-            cv2.imshow(window_name, frame)  # render to PIP
+            cv2.imshow(window_name, frame)  # show frame
             cv2.waitKey(1)                  # pump the window loop
-            time.sleep(0.001)                # tiny pause to reduce CPU load
+            time.sleep(0.001)               # tiny pause to reduce CPU load
     finally:
         cap.release()                   # close the UDP stream
         cv2.destroyWindow(window_name)  # remove the PIP window
@@ -107,8 +104,8 @@ def initialize():
 
 '''Entry point to wire everything together and start the feed.'''
 def run():
-    cap, name = initialize()
-    main_loop(cap, name)
+    cap, name = initialize() # Prepare drone feed and window display
+    main_loop(cap, name)     # show drone frames
 
 if __name__ == "__main__":
     run()

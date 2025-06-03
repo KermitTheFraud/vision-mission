@@ -13,8 +13,6 @@ def get_current_wifi():
     Returns:
         str or None: current SSID if on Windows, else None
     """
-    if platform.system() != "Windows":
-        return None  # unsupported on non-Windows
     try:
         output = subprocess.check_output(
             ["netsh", "wlan", "show", "interfaces"], text=True
@@ -30,8 +28,6 @@ def disconnect_wifi():
     """
     Disconnects current Wi-Fi on Windows.
     """
-    if platform.system() != "Windows":
-        return
     try:
         subprocess.run(["netsh", "wlan", "disconnect"], check=True)
     except Exception:

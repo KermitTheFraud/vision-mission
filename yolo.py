@@ -9,12 +9,12 @@ import cv2             # OpenCV for image capture and display
 from ultralytics import YOLO  # Ultralytics YOLO model API
 
 # Configuration constants
-WEIGHTS       = "YOLOv11/runs/detect/train7/weights/best.pt"  # Path to trained model weights
+WEIGHTS       = "best.pt"  # trained model weights
 CAM_IDX       = 1              # Camera index for cv2.VideoCapture
 PROC_W, PROC_H = 1920, 1080    # Resolution for processing frames
 OUT_W, OUT_H   = 1920, 1080    # Resolution for output/display scaling
 CONF_THR      = 0.5            # Confidence threshold for detections
-DEBUG         = False          # Verbose model output flag
+DEBUG         = False          # Verbose model output flag/Hides details when False
 
 # We treat PROC_W×PROC_H as the size we run YOLO on, and OUT_W×OUT_H as the
 # size we draw/display or send coordinates in. Keeping them separate—even when
@@ -27,13 +27,6 @@ DEBUG         = False          # Verbose model output flag
 # Stores the last known drone position (x, y)
 last_location = None
 drone_location = None  # Current drone position for UDP logic
-
-def initialize_model():
-    """
-    Load and return the YOLO model with specified weights.
-    """
-    print("[VISION] Loading YOLO model...")
-    return YOLO(WEIGHTS)
 
 
 def initialize_camera():
@@ -102,13 +95,13 @@ def process_frame(frame, model, scale_x, scale_y):
     for box in boxes:
         cls_id = int(box.cls[0])             # Class of detection
         conf = float(box.conf[0])            # Confidence score
-        if cls_id == 0 and conf >= CONF_THR:
+        if cls_id == 0 and conf >= CONF_THR: # Has to be a drone and have confidence over 0,5 (0 to 1)
             # Extract bounding box coordinates
             x1, y1, x2, y2 = box.xyxy[0].cpu().numpy().astype(int)
             # Draw rectangle around the drone
             cv2.rectangle(
                 annotated, (x1, y1), (x2, y2),
-                (0, 255, 0), 2
+                (0, 0, 255), 2
             )
             # Compute center point and scale to output coordinates
             cx, cy = (x1 + x2) / 2, (y1 + y2) / 2
@@ -120,7 +113,7 @@ def process_frame(frame, model, scale_x, scale_y):
                 annotated, label,
                 (x1, y1 - 10),
                 cv2.FONT_HERSHEY_SIMPLEX,
-                0.9, (0, 255, 0), 2
+                0.9, (0, 0, 255), 2
             )
             new_location = (sx, sy)
             break  # Only consider the first valid detection
@@ -147,7 +140,7 @@ def main_loop(cap, model, scale_x, scale_y):
             break
 
         annotated = process_frame(frame, model, scale_x, scale_y)
-        cv2.imshow("YOLO Inference", annotated)
+        cv2.imshow("YOLO Inference", annotated) # Display frames
 
         # Exit loop if 'q' is pressed
         if cv2.waitKey(1) & 0xFF == ord("q"):
@@ -159,12 +152,12 @@ def run():
     Entry point: initialize model, camera, display settings,
     then start the main processing loop.
     """
-    model = initialize_model()
-    cap = initialize_camera()
-    setup_display()
-    scale_x, scale_y = calculate_scale_factors()
+    model = YOLO(WEIGHTS) # initialize YOLO model with specified weights
+    cap = initialize_camera() # Starts camera
+    setup_display() # Starts Window display
+    scale_x, scale_y = calculate_scale_factors() # Scale factors for coordinates
 
-    main_loop(cap, model, scale_x, scale_y)
+    main_loop(cap, model, scale_x, scale_y) # Grab frame, process frame, show frame, repeat!
 
     # Cleanup resources
     cap.release()

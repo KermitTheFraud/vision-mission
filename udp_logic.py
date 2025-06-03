@@ -1,13 +1,12 @@
-import navigation as NAV, udp_sender as UDP, time, gui, threading, yolo, re  # import modules for nav logic, UDP comms, timing, and GUI
-from drone_feed import run as drone_feed_run  # import camera feed module
+import navigation as NAV, udp_sender as UDP, time, gui, threading, yolo, drone_feed, re  # import modules for nav logic, UDP comms, timing, and GUI
 
 DELAY = 0.5  # seconds to wait between successive UDP commands
 FLIP_DELAY = 1
 
 STREAMING = False  # flag to indicate if video stream is active, to prevent multiple threads from starting it (it crashes if started twice)
-# Note: The UDP module is assumed to handle the socket connection and command sending.
+# Note: The UDP_sender module is assumed to handle the socket connection and command sending.
 
-INITIALIZED = False # flag to indicate if the UDP (command, streamon) connection has been initialized, to prevent re-initialization
+INITIALIZED = False # flag to indicate if the UDP (command, streamon) connection has been initialized, to prevent re-initialization and making the drone misbehave.
 
 '''Check if current position is within given tolerances of target.'''
 def is_close_enough(current, target, x_tol=100, y_tol=50):
@@ -97,7 +96,7 @@ def retry_to_reach(dest, max_retries=3):
         print(f"[UDP] Retry {attempt}/{max_retries} for {dest}")  # log retry
     print(f"[UDP] Failed to reach {dest} after {max_retries} attempts.")  # final failure
 
-'''Drive through all waypoints defined in GUI list.'''
+'''Go through all waypoints defined in GUI list.'''
 def execute_mission():
     """
     Returns:
@@ -126,7 +125,6 @@ def initialize_and_start_stream():
     time.sleep(DELAY)            # allow socket to settle
 
     # enter SDK mode
-    response = None
     response = UDP.send_command('command')
     if response == 'ok':
         print('[UDP] Entered SDK mode.')
@@ -135,13 +133,12 @@ def initialize_and_start_stream():
         response = UDP.send_command('command')
 
     # request video stream
-    response = None
     response = UDP.send_command('streamon')
     if response == 'ok':
         # start the feed thread immediately
         global STREAMING  # access global flag
         if STREAMING != True:
-            threading.Thread(target=drone_feed_run, daemon=True).start()
+            threading.Thread(target=drone_feed.run, daemon=True).start()
             STREAMING = True  # set streaming flag
 
         print('[UDP] Stream started successfully.')
@@ -171,6 +168,8 @@ def takeoff_sequence():
 
     resp = UDP.send_command('tof?')
 
+    # Extract the first number from the drone's response (e.g. "2156mm") using regex.
+    # Handles None or bad responses safely by searching in an empty string if needed.
     # Try to extract the first (and only) run of digits
     m = re.search(r'(\d+)', resp or "")
     if not m:
