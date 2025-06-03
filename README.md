@@ -225,6 +225,4 @@ y_tol = 72                  # Vertical tolerance (pixels)
 <div align="center">
 
 
-[Report Bug](https://github.com/yourusername/vision-mission/issues) • [Documentation](https://github.com/yourusername/vision-mission/wiki)
-
 </div>
