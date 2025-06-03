@@ -47,9 +47,9 @@ pywin32 (Windows only, for Win32 APIs)
 
 ### Hardware Requirements
 
-- **DJI Tello Drone** (EDU or standard)
+- **DJI Tello Drone** 
 - **External USB Camera** (minimum 1080p recommended)
-- **Windows 11** (full support) or **macOS** (partial support)
+- **Windows 11** (full support)
 - **WiFi adapter** capable of 2.4GHz connections
 
 ## 📦 Installation
@@ -120,11 +120,6 @@ pywin32 (Windows only, for Win32 APIs)
 - Automatic WiFi switching to drone network
 - Live drone camera feed in PIP window
 - All features fully functional
-
-#### macOS (Partial Support)
-- Manual WiFi connection required
-- No drone camera feed (Win32 APIs unavailable)
-- Core tracking and control work normally
 
 ## 🏗️ Architecture
 
@@ -203,33 +198,6 @@ x_tol = 128                 # Horizontal tolerance (pixels)
 y_tol = 72                  # Vertical tolerance (pixels)
 ```
 
-## 🐛 Troubleshooting
-
-### Common Issues
-
-1. **"No vision data" errors**
-   - Check camera index in `yolo.py` (try 0 or 1)
-   - Ensure YOLO weights file exists
-   - Verify camera is connected
-
-2. **WiFi connection fails (Windows)**
-   - Run as administrator
-   - Ensure drone SSID matches configuration
-   - Check Windows Defender firewall
-
-3. **Drone doesn't respond**
-   - Verify IP addresses in `udp_sender.py`
-   - Check drone battery level
-   - Ensure only one instance running
-
-### Debug Mode
-
-Enable verbose output:
-```python
-# yolo.py
-DEBUG = True  # Shows YOLO inference details
-```
-
 ## 📊 Technical Details
 
 ### Coordinate System
@@ -252,43 +220,10 @@ DEBUG = True  # Shows YOLO inference details
 - **Retry logic**: 3 attempts per waypoint
 - **Timeout**: 15 seconds for drone responses
 
-## 🤝 Contributing
-
-This is an exam project for educational purposes. If you're part of the study group:
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes with clear messages
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-### Code Style
-
-- Use descriptive variable names
-- Add inline comments for complex logic
-- Document coordinate transformations
-- Include platform compatibility notes
-
-## 📝 License
-
-This project is created for educational purposes as part of a university exam project.
-
-## 👥 Authors
-
-- **Your Name** - *Initial development* - [GitHub Profile]
-
-## 🙏 Acknowledgments
-
-- DJI Tello SDK documentation
-- Ultralytics YOLOv11 framework
-- Study group members for testing and feedback
-- Course instructors for project guidance
-
 ---
 
 <div align="center">
 
-**Built with ❤️ for autonomous drone navigation**
 
 [Report Bug](https://github.com/yourusername/vision-mission/issues) • [Documentation](https://github.com/yourusername/vision-mission/wiki)
 
